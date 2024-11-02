@@ -5,6 +5,7 @@ import axios, { AxiosError } from 'axios';
 import errorHandler from './middlewares/error-handler';
 import 'express-async-errors';
 import ApiError from './utils/api-error';
+import pino from 'pino';
 
 const { port, origin } = parseArguments();
 
@@ -12,16 +13,21 @@ const api = axios.create({
   baseURL: origin,
 });
 
+const logger = pino({
+  level: 'info',
+});
+
 const app = express();
 
 app.get('*', async (req, res) => {
-  const path = req.path;
-  console.log('Requesting path:', path);
+  const path = req.originalUrl;
+  logger.info('Requesting path:', path);
   let response = null;
   const value = await redisClient.get(path);
   if (value) {
     response = JSON.parse(value);
-    console.log('Cache hit');
+    res.setHeader('X-Cache', 'HIT');
+    res.status(200).send(response);
   } else {
     try {
       response = await api.get(path);
@@ -32,16 +38,29 @@ app.get('*', async (req, res) => {
     }
     response = response.data;
     redisClient.set(path, JSON.stringify(response), {
-      EX: 30,
+      EX: 150,
     });
-    console.log('Cache miss');
+    res.setHeader('X-Cache', 'MISS');
+    res.status(200).send(response);
   }
-  res.send(response);
 });
 
 app.use(errorHandler);
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
   await redisClient.connect();
-  console.log('Server is running on http://localhost:3000');
+  logger.info('Server is running on http://localhost:3000');
 });
+
+// Graceful shutdown handling
+const gracefulShutdown = async () => {
+  logger.info('Shutting down gracefully...');
+  await redisClient.disconnect();
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
