@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/index.ts",
-    "dev": "nodemon --ext ts --loader ts-node/esm --experimental-specifier-resolution node src --port 3000 --origin http://localhost:3001",
-    "clean-cache": "node --loader ts-node/esm --experimental-specifier-resolution node src --clear-cache"
+    "start": "node --loader ts-node/esm --experimental-specifier-resolution node src",
+    "dev": "nodemon --ext ts --loader ts-node/esm --experimental-specifier-resolution node src"
   },
   "keywords": [],
   "author": "",

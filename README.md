@@ -23,5 +23,11 @@ This is a CLI-based caching proxy server that forwards requests to an origin ser
 To start the caching proxy server, use the following command:
 
 ```bash
-caching-proxy --port <number> --origin <url>
+npm start -- --port <number> --origin <url>
+```
+
+To clear the cache, use the following command:
+
+```bash
+npm start -- --clear-cache
 ```
