@@ -7,14 +7,38 @@ import 'express-async-errors';
 import ApiError from './utils/api-error';
 import pino from 'pino';
 
+const logger = pino({
+  level: 'info',
+});
+
+async function connectToRedis() {
+  try {
+    await redisClient.connect();
+    logger.info('Connected to Redis');
+  } catch (error) {
+    logger.error('Failed to connect to Redis:', error);
+    process.exit(1); // Exit if Redis connection fails
+  }
+}
+
+await connectToRedis();
+
+if (process.argv.includes('--clear-cache')) {
+  try {
+    await redisClient.flushDb();
+    logger.info('Cache cleared successfully');
+  } catch (error) {
+    logger.error('Failed to clear cache:', error);
+  } finally {
+    await redisClient.disconnect();
+    process.exit(0);
+  }
+}
+
 const { port, origin } = parseArguments();
 
 const api = axios.create({
   baseURL: origin,
-});
-
-const logger = pino({
-  level: 'info',
 });
 
 const app = express();
@@ -48,7 +72,6 @@ app.get('*', async (req, res) => {
 app.use(errorHandler);
 
 const server = app.listen(port, async () => {
-  await redisClient.connect();
   logger.info('Server is running on http://localhost:3000');
 });
 
