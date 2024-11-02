@@ -20,6 +20,13 @@ This is a CLI-based caching proxy server that forwards requests to an origin ser
 
 ### Running the Caching Proxy Server
 
+Before using the proxy, you need to have redis installed on your machine.
+If you have docker install then inside of the project directory, run the following command:
+
+```bash
+docker compose up -d
+```
+
 To start the caching proxy server, use the following command:
 
 ```bash
